@@ -1,0 +1,63 @@
+name: 缺陷报告
+description: 报告可复现的错误
+title: '[Bug] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请勿上传真实聊天记录、真实截图、API Key或其他敏感信息。
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 实际发生了什么？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开……
+        2. 点击……
+        3. 看到……
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 平台
+      options:
+        - Android
+        - iOS
+        - Web预览
+        - 多个平台
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: GradFlow版本或提交
+      placeholder: v0.2.0 或 commit SHA
+  - type: textarea
+    id: logs
+    attributes:
+      label: 脱敏日志
+      description: 请先删除密钥、聊天内容、图片Base64和个人信息。
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已搜索现有Issue。
+          required: true
+        - label: 我没有附带真实个人数据或密钥。
+          required: true

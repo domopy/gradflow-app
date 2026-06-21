@@ -1,0 +1,30 @@
+name: 功能建议
+description: 提议符合项目定位的新能力
+title: '[Feature] '
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 用户问题
+      description: 这个功能要解决什么具体问题？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: 数据与隐私影响
+      description: 是否涉及聊天、图片、API Key、通知、日历或数据导出？
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: 范围确认
+      options:
+        - label: 我已阅读PROJECT_CONTEXT.md中的产品边界。
+          required: true

@@ -1,0 +1,81 @@
+{
+  "expo": {
+    "name": "研程",
+    "slug": "gradflow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "gradflow",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "app.gradflow.mobile",
+      "supportsTablet": true
+    },
+    "android": {
+      "permissions": [
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F4ED",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "app.gradflow.mobile"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "headers": {
+            "Cross-Origin-Embedder-Policy": "credentialless",
+            "Cross-Origin-Opener-Policy": "same-origin"
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F7F4ED",
+          "android": {
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 76
+          }
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "允许研程将你确认的安排写入系统日历。",
+          "remindersPermission": "允许研程访问系统提醒事项。"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#285E9E"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "允许研程读取你主动选择的通知截图。",
+          "cameraPermission": "允许研程拍摄通知，并在你确认后上传EasyOCR识别。",
+          "microphonePermission": false
+        }
+      ],
+      "expo-sqlite",
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

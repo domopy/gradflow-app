@@ -8,6 +8,14 @@ type NotificationsModule = typeof import('expo-notifications');
 
 let handlerConfigured = false;
 
+export type NotificationScheduleResult =
+  | { ok: true; notificationId: string; remindAt: string }
+  | {
+      ok: false;
+      reason: 'unsupported' | 'missing_time' | 'permission_denied' | 'past_time' | 'system_error';
+      message: string;
+    };
+
 async function loadNotifications(): Promise<NotificationsModule | null> {
   if (Platform.OS === 'web' || isExpoGo()) {
     return null;
@@ -45,20 +53,37 @@ export async function ensureNotificationPermission(): Promise<boolean> {
 export async function scheduleItemNotification(
   item: ScheduleItem,
   minutesBefore: number,
-): Promise<{ notificationId: string; remindAt: string } | null> {
+): Promise<NotificationScheduleResult> {
   try {
     const notifications = await loadNotifications();
     if (!notifications) {
-      return null;
+      return {
+        ok: false,
+        reason: 'unsupported',
+        message: isExpoGo()
+          ? 'Expo Go不支持本地提醒，请使用Android Development Build或Release包。'
+          : '当前平台不支持本地提醒。',
+      };
     }
     const target = getReminderTarget(item);
-    if (!target || !(await ensureNotificationPermission())) {
-      return null;
+    if (!target) {
+      return { ok: false, reason: 'missing_time', message: '事项没有可用于提醒的时间。' };
+    }
+    if (!(await ensureNotificationPermission())) {
+      return {
+        ok: false,
+        reason: 'permission_denied',
+        message: '通知权限未开启，请在系统设置中允许研程发送通知。',
+      };
     }
 
     const remindAt = new Date(target.getTime() - minutesBefore * 60_000);
     if (remindAt.getTime() <= Date.now()) {
-      return null;
+      return {
+        ok: false,
+        reason: 'past_time',
+        message: '提醒时间已经过去，请调整事项时间或提醒提前量。',
+      };
     }
 
     if (Platform.OS === 'android') {
@@ -83,10 +108,17 @@ export async function scheduleItemNotification(
       },
     });
 
-    return { notificationId, remindAt: remindAt.toISOString() };
-  } catch {
+    return { ok: true, notificationId, remindAt: remindAt.toISOString() };
+  } catch (error) {
     // 权限、平台能力或系统调度失败不应阻止事项本身落库。
-    return null;
+    return {
+      ok: false,
+      reason: 'system_error',
+      message:
+        error instanceof Error
+          ? `系统提醒创建失败：${error.message}`
+          : '系统提醒创建失败，请检查精确闹钟权限和后台运行设置。',
+    };
   }
 }
 

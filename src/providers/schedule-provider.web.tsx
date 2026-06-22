@@ -28,6 +28,7 @@ function createPreviewItems(): ScheduleItem[] {
   const base = {
     sourceId: null,
     relatedItemId: null,
+    calendarEventId: null,
     submissionMethod: null,
     sourceQuote: null,
     originalTimeText: null,
@@ -115,6 +116,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
           id: itemId,
           sourceId: input.sourceId ?? previous?.sourceId ?? null,
           relatedItemId: input.relatedItemId ?? previous?.relatedItemId ?? null,
+          calendarEventId: previous?.calendarEventId ?? null,
           type: input.type,
           title: input.title,
           course: input.course ?? null,
@@ -139,6 +141,8 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
       return {
         id: itemId,
         reminderScheduled: input.reminderMinutes != null ? false : null,
+        reminderFailureMessage:
+          input.reminderMinutes != null ? '网页端不支持本地提醒。' : null,
       };
     },
     [],
@@ -154,7 +158,12 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
           reminderFailureCount += 1;
         }
       }
-      return { itemIds: ids, reminderFailureCount };
+      return {
+        itemIds: ids,
+        reminderFailureCount,
+        reminderFailureMessages:
+          reminderFailureCount > 0 ? ['网页端不支持本地提醒。'] : [],
+      };
     },
     [saveItem],
   );
@@ -167,6 +176,9 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
         item.id === id ? { ...item, status, updatedAt: new Date().toISOString() } : item,
       ),
     );
+  }, []);
+  const syncCalendar = useCallback(async (): Promise<'created' | 'updated'> => {
+    throw new Error('网页端不支持写入系统日历');
   }, []);
   const exportBackup = useCallback(
     async () =>
@@ -204,6 +216,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
       saveItem,
       removeItem,
       setStatus,
+      syncCalendar,
       exportBackup,
       restoreBackup,
     }),
@@ -219,6 +232,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
       saveImportedItems,
       saveItem,
       setStatus,
+      syncCalendar,
       exportBackup,
       restoreBackup,
     ],

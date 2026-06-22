@@ -8,6 +8,7 @@ interface ScheduleItemRow {
   id: string;
   source_id: string | null;
   related_item_id: string | null;
+  calendar_event_id: string | null;
   type: string;
   title: string;
   course: string | null;
@@ -40,6 +41,7 @@ function mapRow(row: ScheduleItemRow): ScheduleItem {
     id: row.id,
     sourceId: row.source_id,
     relatedItemId: row.related_item_id,
+    calendarEventId: row.calendar_event_id,
     type: row.type,
     title: row.title,
     course: row.course,
@@ -166,4 +168,17 @@ export async function updateScheduleItemStatus(
 
 export async function deleteScheduleItem(db: SQLiteDatabase, id: string): Promise<void> {
   await db.runAsync('DELETE FROM schedule_items WHERE id = ?', id);
+}
+
+export async function setScheduleItemCalendarEventId(
+  db: SQLiteDatabase,
+  id: string,
+  calendarEventId: string | null,
+): Promise<void> {
+  await db.runAsync(
+    'UPDATE schedule_items SET calendar_event_id = ?, updated_at = ? WHERE id = ?',
+    calendarEventId,
+    new Date().toISOString(),
+    id,
+  );
 }

@@ -6,7 +6,6 @@ import { AppDialog } from '@/components/app-dialog';
 import { Screen } from '@/components/screen';
 import { Button, Card, SectionTitle } from '@/components/ui';
 import { useSchedule } from '@/providers/schedule-provider';
-import { addItemToSystemCalendar } from '@/services/calendar/calendar-service';
 import { colors, radii, spacing, typeMeta, typography } from '@/theme/tokens';
 import type { Source } from '@/types/source';
 import type { Reminder, ScheduleChange } from '@/types/schedule';
@@ -25,6 +24,7 @@ export default function ItemDetailScreen() {
     getSource,
     removeItem,
     setStatus,
+    syncCalendar,
   } = useSchedule();
   const item = items.find((candidate) => candidate.id === id);
   const [source, setSource] = useState<Source | null>(null);
@@ -109,10 +109,13 @@ export default function ItemDetailScreen() {
 
   async function addToCalendar() {
     try {
-      await addItemToSystemCalendar(currentItem);
+      const action = await syncCalendar(currentItem.id);
       setCalendarDialog({
-        title: '已写入系统日历',
-        description: '你可以在手机日历中继续调整时间、地点和提醒。',
+        title: action === 'created' ? '已写入系统日历' : '已同步系统日历',
+        description:
+          action === 'created'
+            ? '后续在研程中编辑或删除事项时，会同步处理这个系统日历事件。'
+            : '系统日历中的时间、地点和说明已更新。',
         badge: '成',
       });
     } catch (error) {
@@ -242,7 +245,7 @@ export default function ItemDetailScreen() {
           style={styles.actionButton}
         />
         <Button
-          label="写入系统日历"
+          label={item.calendarEventId ? '同步系统日历' : '写入系统日历'}
           onPress={addToCalendar}
           style={styles.actionButton}
         />

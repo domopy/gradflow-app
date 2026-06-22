@@ -19,7 +19,9 @@ import {
   commitDateTimeSelection,
   dateTimeInputToDate,
   mergeDateTimeSelection,
+  parseDateTimeInput,
 } from '@/utils/date';
+import { showAppAlert } from '@/utils/alerts';
 
 interface DateTimeInputProps {
   value: string;
@@ -41,6 +43,13 @@ export function DateTimeInput({
 
   function openPicker(nextMode: 'date' | 'time') {
     // 每次打开都重新读取文本，避免选择器覆盖用户刚刚手动修改的另一部分。
+    if (value.trim() && !parseDateTimeInput(value)) {
+      showAppAlert(
+        '时间格式尚未完成',
+        '请先按“YYYY-MM-DD HH:mm”完成输入，或清空后再使用选择器。',
+      );
+      return;
+    }
     const current = dateTimeInputToDate(value);
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({

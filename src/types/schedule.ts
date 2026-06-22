@@ -34,6 +34,7 @@ export interface ScheduleItem {
   id: string;
   sourceId: string | null;
   relatedItemId: string | null;
+  calendarEventId?: string | null;
   type: ScheduleItemType;
   title: string;
   course: string | null;

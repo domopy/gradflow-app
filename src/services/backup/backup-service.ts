@@ -143,13 +143,14 @@ export async function replaceFromBackup(
     for (const item of backup.items) {
       await db.runAsync(
         `INSERT INTO schedule_items (
-          id, source_id, related_item_id, type, title, course, start_at, due_at,
+          id, source_id, related_item_id, calendar_event_id, type, title, course, start_at, due_at,
           location, submission_method, requirements, source_quote, original_time_text,
           confidence, uncertain_fields, change_type, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         item.id,
         item.sourceId,
         item.relatedItemId,
+        null,
         item.type,
         item.title,
         item.course,
@@ -195,6 +196,8 @@ function mapBackupItem(row: Record<string, unknown>) {
     id: row.id,
     sourceId: row.source_id,
     relatedItemId: row.related_item_id,
+    // 系统日历事件ID只在当前设备有效，不进入可迁移备份。
+    calendarEventId: null,
     type: row.type,
     title: row.title,
     course: row.course,

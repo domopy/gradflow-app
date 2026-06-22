@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
 export async function migrateDatabase(db: SQLiteDatabase) {
   // 连接级PRAGMA需要每次打开数据库时设置，不能只依赖首次建库。
@@ -28,6 +28,7 @@ export async function migrateDatabase(db: SQLiteDatabase) {
         id TEXT PRIMARY KEY NOT NULL,
         source_id TEXT,
         related_item_id TEXT,
+        calendar_event_id TEXT,
         type TEXT NOT NULL,
         title TEXT NOT NULL,
         course TEXT,
@@ -106,6 +107,12 @@ export async function migrateDatabase(db: SQLiteDatabase) {
       CREATE INDEX IF NOT EXISTS idx_schedule_changes_item_id
         ON schedule_changes(item_id);
     `);
+  }
+
+  if (currentVersion >= 1 && currentVersion < 4) {
+    await db.execAsync(
+      'ALTER TABLE schedule_items ADD COLUMN calendar_event_id TEXT',
+    );
   }
 
   if (currentVersion < DATABASE_VERSION) {

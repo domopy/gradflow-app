@@ -157,9 +157,10 @@ export default function ItemEditorScreen() {
       if (saved.reminderScheduled === false) {
         showAppAlert(
           '事项已保存',
-          isExpoGo()
+          saved.reminderFailureMessage ??
+          (isExpoGo()
             ? 'Expo Go不支持当前本地提醒模块。请使用重新构建的Development Build或Release版本测试。'
-            : '提醒未创建。请确认提醒时间仍在未来，并在系统设置中允许通知、“闹钟和提醒”及后台运行。',
+            : '提醒未创建。请确认提醒时间仍在未来，并在系统设置中允许通知、“闹钟和提醒”及后台运行。'),
           [{ text: '知道了', onPress: finishNavigation }],
         );
       } else {

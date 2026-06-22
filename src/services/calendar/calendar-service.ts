@@ -4,7 +4,9 @@ import { Platform } from 'react-native';
 import type { ScheduleItem } from '@/types/schedule';
 import { isExpoGo } from '@/utils/runtime';
 
-export async function addItemToSystemCalendar(item: ScheduleItem): Promise<string> {
+export async function syncItemToSystemCalendar(
+  item: ScheduleItem,
+): Promise<{ eventId: string; action: 'created' | 'updated' }> {
   if (Platform.OS === 'web') {
     throw new Error('网页端不支持写入系统日历');
   }
@@ -12,9 +14,7 @@ export async function addItemToSystemCalendar(item: ScheduleItem): Promise<strin
     throw new Error('Expo Go不支持写入系统日历，请使用Development Build或Release版本测试');
   }
 
-  const permission = await Calendar.requestCalendarPermissions(
-    Platform.OS === 'ios',
-  );
+  const permission = await Calendar.requestCalendarPermissions(false);
   if (!permission.granted) {
     throw new Error('未获得系统日历权限');
   }
@@ -27,20 +27,40 @@ export async function addItemToSystemCalendar(item: ScheduleItem): Promise<strin
   const endDate = item.dueAt && item.startAt
     ? new Date(item.dueAt)
     : new Date(startDate.getTime() + 60 * 60_000);
-  const calendar =
-    Platform.OS === 'ios'
-      ? Calendar.getDefaultCalendarSync()
-      : await getWritableAndroidCalendar();
-  const event = await calendar.createEvent({
+  const details = {
     title: item.title,
     startDate,
     endDate: endDate > startDate ? endDate : new Date(startDate.getTime() + 60 * 60_000),
     location: item.location ?? undefined,
     notes: buildNotes(item),
     allDay: false,
-  });
+  };
 
-  return event.id;
+  if (item.calendarEventId) {
+    try {
+      const event = await Calendar.ExpoCalendarEvent.get(item.calendarEventId);
+      await event.update(details);
+      return { eventId: item.calendarEventId, action: 'updated' };
+    } catch {
+      // 用户可能已在系统日历中删除事件，此时重新创建并更新本地关联。
+    }
+  }
+
+  const calendar = await getWritableAndroidCalendar();
+  const event = await calendar.createEvent(details);
+  return { eventId: event.id, action: 'created' };
+}
+
+export async function deleteSystemCalendarEvent(eventId: string): Promise<void> {
+  if (Platform.OS === 'web' || isExpoGo()) {
+    return;
+  }
+  try {
+    const event = await Calendar.ExpoCalendarEvent.get(eventId);
+    await event.delete();
+  } catch {
+    // 系统事件已被用户删除时，本地清理仍保持幂等。
+  }
 }
 
 async function getWritableAndroidCalendar(): Promise<Calendar.ExpoCalendar> {

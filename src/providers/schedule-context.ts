@@ -17,7 +17,11 @@ export interface ScheduleContextValue {
   saveImportedItems: (
     source: SourceInput,
     items: ScheduleItemInput[],
-  ) => Promise<{ itemIds: string[]; reminderFailureCount: number }>;
+  ) => Promise<{
+    itemIds: string[];
+    reminderFailureCount: number;
+    reminderFailureMessages: string[];
+  }>;
   getItem: (id: string) => Promise<ScheduleItem | null>;
   getReminder: (itemId: string) => Promise<Reminder | null>;
   getSource: (id: string) => Promise<Source | null>;
@@ -25,9 +29,14 @@ export interface ScheduleContextValue {
   saveItem: (
     input: ScheduleItemInput,
     id?: string,
-  ) => Promise<{ id: string; reminderScheduled: boolean | null }>;
+  ) => Promise<{
+    id: string;
+    reminderScheduled: boolean | null;
+    reminderFailureMessage: string | null;
+  }>;
   removeItem: (id: string) => Promise<void>;
   setStatus: (id: string, status: ScheduleItemStatus) => Promise<void>;
+  syncCalendar: (id: string) => Promise<'created' | 'updated'>;
   exportBackup: () => Promise<string>;
   restoreBackup: (json: string) => Promise<number>;
 }

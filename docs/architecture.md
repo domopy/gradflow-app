@@ -2,7 +2,7 @@
 
 ## 技术边界
 
-研程使用Expo React Native、TypeScript、Expo Router和Expo SQLite构建。应用没有自建后端，Android优先验证，同时保持iOS兼容。
+研程使用Expo React Native、TypeScript、Expo Router和Expo SQLite构建。应用没有自建后端，当前发布与验证范围为Android，Web用于开发预览。
 
 ## 目录职责
 
@@ -61,6 +61,16 @@ EasyOCR配置与DeepSeek配置相互独立，两种密钥分别存入SecureStore
 `DateTimeInput`统一承载导入、识别确认、新建和编辑页面的日期时间输入。移动端使用`@react-native-community/datetimepicker`提供中文日期与24小时制时间选择器，同时保留`YYYY-MM-DD HH:mm`文本输入；Web预览只保留文本输入。
 
 日期和时间分开合并：选择日期时保留当前文本中的时分，选择时间时保留年月日。选择器每次打开前重新解析文本，只有用户确认后才写回，因此取消操作或尚未完成的手动输入不会被覆盖。最终保存时仍由统一解析函数校验无效日期，并转换为ISO时间写入领域模型。
+
+不完整的手动文本不会作为选择器回退值使用。组件会要求用户先完成或清空输入，避免系统选择器用当前时间覆盖尚未编辑完的内容。
+
+## 系统日历同步
+
+数据库v4在事项上保存当前设备的系统日历事件ID。首次写入创建事件；再次同步或编辑事项时更新同一事件；删除事项时尝试删除系统事件。若用户已在系统日历中删除事件，下次同步会重新创建。事件ID具有设备局部性，不进入JSON备份。
+
+## 备份文件
+
+备份内容仍由`backup-service`负责Schema校验和事务恢复，`backup-file-service`只负责`.json`文件写入、系统分享和文件选择。两层分离使数据格式测试不依赖平台文件API。
 
 ## 事项变更
 

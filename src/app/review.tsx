@@ -220,7 +220,7 @@ export default function ReviewScreen() {
       completedRef.current = true;
       setSession(null);
       const reminderMessage = saveResult.reminderFailureCount
-        ? `其中${saveResult.reminderFailureCount}项提醒未能创建，请检查提醒时间和系统权限。`
+        ? `其中${saveResult.reminderFailureCount}项提醒未能创建：${saveResult.reminderFailureMessages[0] ?? '请检查提醒时间和系统权限。'}`
         : '';
       showAppAlert(
         '已保存',

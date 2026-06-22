@@ -31,6 +31,7 @@ export const persistedScheduleItemSchema = z.object({
   id: z.string(),
   sourceId: z.string().nullable(),
   relatedItemId: z.string().nullable(),
+  calendarEventId: z.string().nullable().default(null),
   type: z.enum(scheduleItemTypes),
   title: z.string(),
   course: z.string().nullable(),

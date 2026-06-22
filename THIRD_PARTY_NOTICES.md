@@ -8,6 +8,7 @@
 - React及React Native：MIT
 - Expo SQLite、Notifications、Calendar、SecureStore、FileSystem：MIT
 - Expo ImagePicker、ImageManipulator：MIT
+- Expo DocumentPicker、Sharing：MIT
 - React Native Community DateTimePicker：MIT
 - Zod：MIT
 - Vitest：MIT

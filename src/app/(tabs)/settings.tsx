@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Pressable,
-  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -30,6 +29,10 @@ import { colors, radii, spacing, typography } from '@/theme/tokens';
 import type { ImageRetentionPolicy } from '@/types/image-import';
 import { useSchedule } from '@/providers/schedule-provider';
 import { showAppAlert } from '@/utils/alerts';
+import {
+  pickBackupFile,
+  shareBackupFile,
+} from '@/services/backup/backup-file-service';
 
 export default function SettingsScreen() {
   const { exportBackup, restoreBackup } = useSchedule();
@@ -147,12 +150,24 @@ export default function SettingsScreen() {
     try {
       const json = await exportBackup();
       setBackupText(json);
-      await Share.share({
-        title: `研程备份-${new Date().toISOString().slice(0, 10)}.json`,
-        message: json,
-      });
+      await shareBackupFile(json);
     } catch (error) {
       showAppAlert('导出失败', error instanceof Error ? error.message : '请稍后重试');
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
+  async function handlePickBackup() {
+    setBackupBusy(true);
+    try {
+      const json = await pickBackupFile();
+      if (json !== null) {
+        setBackupText(json);
+        showAppAlert('备份已读取', '请确认后点击“恢复当前备份”。');
+      }
+    } catch (error) {
+      showAppAlert('读取失败', error instanceof Error ? error.message : '请检查备份文件');
     } finally {
       setBackupBusy(false);
     }
@@ -317,13 +332,20 @@ export default function SettingsScreen() {
             style={styles.button}
           />
           <Button
-            label="恢复此JSON"
-            disabled={!backupText.trim()}
-            onPress={confirmRestoreBackup}
+            label="选择备份文件"
+            disabled={backupBusy}
+            onPress={handlePickBackup}
             style={styles.button}
-            variant="danger"
+            variant="secondary"
           />
         </View>
+        <Button
+          label="恢复当前备份"
+          disabled={!backupText.trim()}
+          onPress={confirmRestoreBackup}
+          style={styles.restoreBackupButton}
+          variant="danger"
+        />
         <TextInput
           multiline
           onChangeText={setBackupText}
@@ -351,7 +373,7 @@ export default function SettingsScreen() {
 
       <SectionTitle>版本</SectionTitle>
       <Card>
-        <SettingRow label="研程 GradFlow" value="v0.5.0" last />
+        <SettingRow label="研程 GradFlow" value="v1.0.1" last />
       </Card>
     </Screen>
   );
@@ -545,5 +567,8 @@ const styles = StyleSheet.create({
     minHeight: 150,
     marginTop: spacing.lg,
     paddingTop: spacing.md,
+  },
+  restoreBackupButton: {
+    marginTop: spacing.md,
   },
 });

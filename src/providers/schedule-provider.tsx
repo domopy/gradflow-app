@@ -12,6 +12,7 @@ import {
   deleteScheduleItem,
   getScheduleItem,
   listScheduleItems,
+  setScheduleItemCalendarEventId,
   updateScheduleItem,
   updateScheduleItemStatus,
 } from '@/db/repositories/schedule-items';
@@ -45,6 +46,10 @@ import {
   parseBackup,
   replaceFromBackup,
 } from '@/services/backup/backup-service';
+import {
+  deleteSystemCalendarEvent,
+  syncItemToSystemCalendar,
+} from '@/services/calendar/calendar-service';
 
 export function ScheduleProvider({ children }: PropsWithChildren) {
   const db = useSQLiteContext();
@@ -158,6 +163,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
         }
       });
       let reminderFailureCount = 0;
+      const reminderFailureMessages: string[] = [];
       for (const itemId of new Set(changedItemIds)) {
         const reminderUpdated = await rescheduleChangedItem(
           db,
@@ -174,8 +180,11 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
           const scheduled = item
             ? await scheduleItemNotification(item, minutesBefore)
             : null;
-          if (!scheduled) {
+          if (!scheduled || !scheduled.ok) {
             reminderFailureCount += 1;
+            reminderFailureMessages.push(
+              scheduled?.message ?? '事项不存在，无法创建提醒。',
+            );
             continue;
           }
           await replaceReminder(
@@ -190,7 +199,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
         }
       }
       await refresh();
-      return { itemIds, reminderFailureCount };
+      return { itemIds, reminderFailureCount, reminderFailureMessages };
     },
     [db, refresh],
   );
@@ -222,6 +231,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
 
       const itemId = id ?? (await createScheduleItem(db, input));
       let reminderScheduled: boolean | null = null;
+      let reminderFailureMessage: string | null = null;
       if (id) {
         await updateScheduleItem(db, id, {
           ...input,
@@ -235,6 +245,17 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
             input.uncertainFields ?? previousItem?.uncertainFields ?? [],
           changeType: input.changeType ?? previousItem?.changeType ?? 'created',
         });
+        if (previousItem?.calendarEventId) {
+          const updatedItem = await getScheduleItem(db, id);
+          if (updatedItem) {
+            try {
+              const synced = await syncItemToSystemCalendar(updatedItem);
+              await setScheduleItemCalendarEventId(db, id, synced.eventId);
+            } catch {
+              // 日历同步失败不回滚已保存事项，用户可在详情页再次手动同步。
+            }
+          }
+        }
       }
 
       // 编辑表单未触碰提醒字段时保持现状；显式传入null才删除提醒。
@@ -252,7 +273,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
               savedItem,
               effectiveReminderMinutes,
             );
-            if (scheduled) {
+            if (scheduled.ok) {
               await replaceReminder(
                 db,
                 itemId,
@@ -262,13 +283,14 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
               reminderScheduled = true;
             } else {
               reminderScheduled = false;
+              reminderFailureMessage = scheduled.message;
             }
           }
         }
       }
 
       await refresh();
-      return { id: itemId, reminderScheduled };
+      return { id: itemId, reminderScheduled, reminderFailureMessage };
     },
     [db, refresh],
   );
@@ -278,6 +300,9 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
       const item = await getScheduleItem(db, id);
       const changeSourceIds = await listChangeSourceIds(db, id);
       const reminder = await getReminderForItem(db, id);
+      if (item?.calendarEventId) {
+        await deleteSystemCalendarEvent(item.calendarEventId);
+      }
       if (reminder) {
         await cancelNotification(reminder.notificationId);
       }
@@ -306,6 +331,19 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
       }
       await updateScheduleItemStatus(db, id, status);
       await refresh();
+    },
+    [db, refresh],
+  );
+  const syncCalendar = useCallback(
+    async (id: string) => {
+      const item = await getScheduleItem(db, id);
+      if (!item) {
+        throw new Error('事项不存在');
+      }
+      const result = await syncItemToSystemCalendar(item);
+      await setScheduleItemCalendarEventId(db, id, result.eventId);
+      await refresh();
+      return result.action;
     },
     [db, refresh],
   );
@@ -342,6 +380,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
       saveItem,
       removeItem,
       setStatus,
+      syncCalendar,
       exportBackup,
       restoreBackup,
     }),
@@ -358,6 +397,7 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
       saveImportedItems,
       saveItem,
       setStatus,
+      syncCalendar,
       exportBackup,
       restoreBackup,
     ],
@@ -382,7 +422,7 @@ async function rescheduleChangedItem(
       return true;
     }
     const scheduled = await scheduleItemNotification(item, nextLeadMinutes);
-    if (!scheduled) return false;
+    if (!scheduled.ok) return false;
     await replaceReminder(db, itemId, scheduled.remindAt, scheduled.notificationId);
     return true;
   } catch {

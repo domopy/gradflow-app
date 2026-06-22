@@ -2,17 +2,13 @@
   "expo": {
     "name": "研程",
     "slug": "gradflow",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "gradflow",
     "userInterfaceStyle": "light",
-    "ios": {
-      "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "app.gradflow.mobile",
-      "supportsTablet": true
-    },
     "android": {
+      "versionCode": 2,
       "permissions": [
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
@@ -71,7 +67,9 @@
       ],
       "expo-sqlite",
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-document-picker",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

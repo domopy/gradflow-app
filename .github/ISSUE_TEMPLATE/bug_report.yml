@@ -36,7 +36,6 @@ body:
       label: 平台
       options:
         - Android
-        - iOS
         - Web预览
         - 多个平台
     validations:

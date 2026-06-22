@@ -2,7 +2,7 @@
 
 研程是面向研究生的本地优先手机日程助手。它把课程通知、导师消息、聊天截图和纸面通知整理成可核对、可提醒、可追溯的日程。
 
-当前版本：**v1.0.0**。项目以Android优先验证，同时保持iOS兼容；Web端用于界面和流程预览。
+当前版本：**v1.0.1**。项目以Android为发布平台；Web端用于界面和流程预览。
 
 ## 核心能力
 
@@ -44,8 +44,7 @@
 
 - Node.js 22.13或更高版本，推荐Node.js 24 LTS；
 - npm；
-- Android真机、模拟器或iOS设备；
-- iOS原生构建需要macOS和Xcode；
+- Android真机或模拟器；
 - 完整通知验证需要Development Build或Release包。
 
 ## 快速开始
@@ -108,7 +107,7 @@ npm start
 
 ### 备份与恢复
 
-设置页可生成JSON备份并通过系统分享。恢复采用整库替换策略，执行前会再次确认。备份不包含API Key、系统通知标识和来源图片；恢复后需要重新设置系统提醒。
+设置页可生成真正的`.json`备份文件并通过系统分享，也可从文件选择器读取备份。恢复采用整库替换策略，执行前会再次确认。备份不包含API Key、系统通知标识、系统日历事件ID和来源图片；恢复后需要重新设置系统提醒。
 
 ## 数据与隐私
 
@@ -145,7 +144,6 @@ docs/            架构、隐私和发布文档
 ```bash
 npm start          # 启动Expo开发服务器
 npm run android    # 运行Android原生项目
-npm run ios        # 运行iOS原生项目
 npm run web        # 启动Web预览
 npm run lint       # ESLint
 npm run typecheck  # TypeScript检查
@@ -158,9 +156,17 @@ npm run verify     # check + Expo依赖检查 + 高危漏洞审计
 
 ```bash
 npx expo export --platform android
-npx expo export --platform ios
 npx expo export --platform web
 ```
+
+Android签名构建：
+
+```bash
+npm run build:android:preview     # 内部分发APK
+npm run build:android:production  # 商店AAB
+```
+
+首次使用EAS前需要执行`npx eas init`关联Expo项目，并在GitHub仓库配置`EXPO_TOKEN`。标签工作流会自动创建GitHub Release；配置令牌后还会启动签名AAB构建。
 
 Android精确定时提醒需要`SCHEDULE_EXACT_ALARM`权限。修改原生依赖或权限后，Metro热更新不会生效，必须重新构建并安装应用。
 
@@ -170,12 +176,12 @@ Android精确定时提醒需要`SCHEDULE_EXACT_ALARM`权限。修改原生依赖
 
 - `npm ci`
 - `npm run verify`
-- Android、iOS和Web的Expo导出
+- Android和Web的Expo导出
 
 ## 已知限制
 
 - 本地提醒在Expo Go中不可完整验证；
-- 系统日期/时间选择器需在Android和iOS真机上完成最终视觉验收；
+- 系统日期/时间选择器需在Android真机上完成最终视觉验收；
 - EasyOCR和DeepSeek是外部服务，稳定性、额度和数据处理规则由服务提供方决定；
 - `npm audit`可能报告Expo CLI依赖链中的中危告警，项目CI仅对高危和严重漏洞失败；
 - 不应运行可能破坏Expo SDK版本约束的`npm audit fix --force`。
